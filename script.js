@@ -245,9 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // Format bold text
         let formattedText = messageText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
         
-        // Format markdown links [text](url)
-        formattedText = formattedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
-        
         // Format URLs starting with https
         formattedText = formattedText.replace(/(https:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
     
@@ -714,95 +711,114 @@ document.addEventListener("DOMContentLoaded", () => {
 
   
 
-document.getElementById('search-btn').addEventListener('click', function() {
-  // Get the values from the input fields
-  const ordernumber = document.getElementById('order-number').value.trim();
-
-  // Check if the order number field is filled
-  if (!ordernumber) {
+  document.getElementById('search-btn').addEventListener('click', function() {
+    // Get the values from the input fields
+    const ordernumber = document.getElementById('order-number').value.trim();
+  
+    // Check if the order number field is filled
+    if (!ordernumber) {
       alert('Please fill the order number field');
       return; // Stop the function if the field is empty
-  }  
-
-  // Create and show the loading effect
-  const loadingDiv = document.createElement('div');
-  loadingDiv.id = 'loading';
-  loadingDiv.innerHTML = `
-    <p style="font-size: 18px; font-weight: bold; color: #007BFF; text-align: center; animation: blink 1.5s linear infinite;">
-      Loading, please wait...
-    </p>
-  `;
-
-  // Append the loading element to the web-scrape-section
-  document.getElementById('web-scrape-section').appendChild(loadingDiv);
-
-  // Prepare the API body
-  const requestBody = {
+    }
+  
+    // Create and show the loading effect
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loading';
+    loadingDiv.innerHTML = `
+      <p style="font-size: 18px; font-weight: bold; color: #007BFF; text-align: center; animation: blink 1.5s linear infinite;">
+        Loading, please wait...
+      </p>
+    `;
+  
+    // Append the loading element to the web-scrape-section
+    document.getElementById('web-scrape-section').appendChild(loadingDiv);
+  
+    // Prepare the API body
+    const requestBody = {
       "order_number": ordernumber
-  };
-
-  // Call the API to get the order status
-  fetch('http://127.0.0.1:8000/order_status', {
+    };
+  
+    // Call the API to get the order status
+    fetch('http://127.0.0.1:8000/order_status', {
       method: 'POST',
       headers: {
-          'Content-Type': 'application/json'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
-  })
-  .then(response => {
-      if (!response.ok) {
+    })
+      .then(response => {
+        if (!response.ok) {
           throw new Error('Failed to fetch order status');
-      }
-      return response.json();
-  })
-  .then(data => {
-      //console.log('Fetched Data successfully:', data);
-      // Hide input and buttons
-      document.getElementById('order-number').style.display = 'none';
-      document.getElementById('search-btn').style.display = 'none';
-      document.getElementById('exit-scrape').style.display = 'none';
-
-      // Remove the loading effect
-      document.getElementById('loading').remove();
-      
-      // Create a new div with the fetched data
-      const dataDiv = document.createElement('div');
-      dataDiv.id = 'web-data';
-      dataDiv.innerHTML = `
-        <p><strong>Flow Name:</strong> ${data.flow_name}</p>
-        <p><strong>Tracking Info:</strong> ${data.tracking_info}</p>
-      `;
-      
-      // Append the new div to the web-scrape-section
-      document.getElementById('web-scrape-section').appendChild(dataDiv);
-
-      // Create a new button
-      const newButton = document.createElement('button');
-      newButton.textContent = 'Back'; // Modify text as needed
-      newButton.id = 'back-btn';
-      
-      // Append the button below the div
-      document.getElementById('web-scrape-section').appendChild(newButton);
-
-      newButton.addEventListener('click', function() {
-        document.getElementById('web-data').style.display = 'none';
-        document.getElementById('back-btn').style.display = 'none';
-        document.getElementById('order-number').style.display = 'flex';
-        document.getElementById('search-btn').style.display = 'flex';
-        document.getElementById('exit-scrape').style.display = 'flex';
-        document.getElementById('order-number').value = '';
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Hide input and buttons
+        document.getElementById('order-number').style.display = 'none';
+        document.getElementById('search-btn').style.display = 'none';
+        document.getElementById('exit-scrape').style.display = 'none';
+  
+        // Remove the loading effect
+        document.getElementById('loading').remove();
+  
+        // Check if web-data div already exists
+        let dataDiv = document.getElementById('web-data');
+        if (!dataDiv) {
+          // Create a new div with the fetched data
+          dataDiv = document.createElement('div');
+          dataDiv.id = 'web-data';
+          dataDiv.innerHTML = `
+            <p><strong>Flow Name:</strong> ${data.flow_name}</p>
+            <p><strong>Tracking Info:</strong> ${data.tracking_info}</p>
+          `;
+  
+          // Append the new div to the web-scrape-section
+          document.getElementById('web-scrape-section').appendChild(dataDiv);
+        } else {
+          // If the div already exists, update the content
+          dataDiv.style.display = 'block';
+          dataDiv.innerHTML = `
+            <p><strong>Flow Name:</strong> ${data.flow_name}</p>
+            <p><strong>Tracking Info:</strong> ${data.tracking_info}</p>
+          `;
+        }
+  
+        // Check if back button already exists
+        let backButton = document.getElementById('back-btn');
+        if (!backButton) {
+          // Create a new button if it doesn't exist
+          backButton = document.createElement('button');
+          backButton.textContent = 'Back';
+          backButton.id = 'back-btn';
+  
+          // Append the button below the div
+          document.getElementById('web-scrape-section').appendChild(backButton);
+        } else {
+          // If the button already exists, show it
+          backButton.style.display = 'inline-block';
+        }
+  
+        backButton.addEventListener('click', function() {
+          // Hide the web-data and back button, show the original inputs
+          document.getElementById('web-data').style.display = 'none';
+          document.getElementById('back-btn').style.display = 'none';
+          document.getElementById('order-number').style.display = 'flex';
+          document.getElementById('search-btn').style.display = 'flex';
+          document.getElementById('exit-scrape').style.display = 'flex';
+          document.getElementById('order-number').value = ''; // Clear input
+        });
+      })
+      .catch(error => {
+        console.error('Error:', error);
+  
+        // Remove the loading effect if error occurs
+        document.getElementById('loading').remove();
+  
+        // Display an error message to the user
+        alert('Error fetching data. Please try again later.');
       });
-  })
-  .catch(error => {
-      console.error('Error:', error);
-      
-      // Remove the loading effect if error occurs
-      document.getElementById('loading').remove();
-      
-      // Display an error message to the user
-      alert('Error fetching data. Please try again later.');
   });
-});
+  
 
 
 document.getElementById('exit-scrape').addEventListener('click', function() {
